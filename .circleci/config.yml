@@ -28,9 +28,9 @@ jobs: # a collection of steps
       - run:
           name: Install MySQL CLI
           command: |
-            #sudo apt-get update
+           sudo apt-get update
             #sudo apt-get install mysql-server
-            sudo apt install -y mysql-client
+            sudo apt-get install -y mysql-client
             mysql -h 127.0.0.1 -u root -prootpw test_db < sql-data/yummy.sql
             mysql -h 127.0.0.1 -u root -prootpw --execute="SELECT * FROM test_db.account"
             mysql -h 127.0.0.1 -u root -prootpw --execute="SELECT * FROM test_db.bill"
