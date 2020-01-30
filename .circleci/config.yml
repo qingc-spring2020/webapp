@@ -1,5 +1,15 @@
 version: 2 # use CircleCI 2.0
 jobs: # a collection of steps
+  pr_check:
+    docker:
+      - image: circleci/ruby:2.4-node
+      - image: circleci/postgres:9.4.12-alpine
+    steps:
+      - checkout
+      - save_cache: # Caches dependencies with a cache key
+          key: v1-repo-{{ .Environment.CIRCLE_SHA1 }}
+          paths:
+            - ~/circleci-demo-workflows
   build: # runs not using Workflows must have a `build` job as entry point
 
     working_directory: ~/webapp # directory where steps will run
@@ -61,3 +71,6 @@ workflows:
   build_deploy: # name of your workflow
     jobs:
       - build
+  pr-check:
+    jobs:
+      - pr_check
