@@ -21,8 +21,8 @@ class Assignment3ApplicationTests {
     void createAccount() {
 
         Account account = new Account();
-        account.setPassword = "qcw123456789";
-        account.setEmailAddress = "123@qq.com"
+        account.setPassword( "qcw123456789");
+        account.setEmailAddress("123@qq.com");
         Assert.assertSame("create successfully", 1, accountService.createAccount(account));
     }
 
