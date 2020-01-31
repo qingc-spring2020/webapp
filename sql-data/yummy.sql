@@ -27,11 +27,11 @@ CREATE TABLE `bill` (
 
 INSERT INTO bill
 VALUES (
-	"02105ec4-97c1-4b16-8e1a-b181a0bfe4c4",
-	"2020-01-29 20:07:33",
-	"2020-01-29 20:07:33",
-	"e8ffcae7-d7fb-403a-be39-41d99aa9b4fc",
-	"Northeastern University",
+  "02105ec4-97c1-4b16-8e1a-b181a0bfe4c4",
+  "2020-01-29 20:07:33",
+  "2020-01-29 20:07:33",
+  "e8ffcae7-d7fb-403a-be39-41d99aa9b4fc",
+  "Northeastern University",
   "2021-05-05",
   "2021-04-11",
   "7000.51",
