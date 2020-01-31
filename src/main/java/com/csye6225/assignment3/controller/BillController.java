@@ -209,7 +209,7 @@ public class BillController {
 
                     Bill bill = billService.getBillInfo(id);
                     if (bill == null) {
-                        response.setStatus(401);
+                        response.setStatus(404);
                         jsonObject.put("message", "bill is not existed");
                     } else {
                         System.out.println("billId"+bill.getBillId());
@@ -249,7 +249,7 @@ public class BillController {
                 if(accountService.login(userAccount[0],userAccount[1])) {
                     Bill bill = billService.getBillInfo(id);
                     if (bill == null) {
-                        response.setStatus(401);
+                        response.setStatus(404);
                         jsonObject.put("message", "bill is not existed");
                     } else {
                         if(!bill.getOwnerId().equals(account.getUserId())) {
@@ -352,6 +352,8 @@ public class BillController {
 
                     bill.setOwnerId(account.getUserId());
                     Bill billTemp = billService.createBill(bill);
+
+                    response.setStatus(201);
                     jsonObject.put("id",billTemp.getBillId());
                     jsonObject.put("created_ts",billTemp.getCreatedTs());
                     jsonObject.put("updated_ts",billTemp.getUpdatedTs());
