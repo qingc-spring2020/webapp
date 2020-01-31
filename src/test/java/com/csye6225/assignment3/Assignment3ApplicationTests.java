@@ -20,7 +20,7 @@ class Assignment3ApplicationTests {
     @Test
     void deleteBillInfo() {
 
-        Assert.assertSame("delete successfully", 1, billService.deleteBill("19f86a44-cb55-4e30-899e-b59a3ed0839f"));
+        Assert.assertSame("delete successfully", 1, billService.deleteBill("02105ec4-97c1-4b16-8e1a-b181a0bfe4c4"));
     }
 
 }
