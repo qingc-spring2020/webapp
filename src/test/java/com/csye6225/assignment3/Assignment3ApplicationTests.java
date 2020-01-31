@@ -15,12 +15,15 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 class Assignment3ApplicationTests {
 
     @Autowired
-    private BillService billService;
+    private AccountService accountService;
 
     @Test
-    void deleteBillInfo() {
+    void createAccount() {
 
-        Assert.assertSame("delete successfully", 1, billService.deleteBill("02105ec4-97c1-4b16-8e1a-b181a0bfe4c4"));
+        Account account = new Account();
+        account.setPassword = "qcw123456789";
+        account.setEmailAddress = "123@qq.com"
+        Assert.assertSame("create successfully", 1, accountService.createAccount(account));
     }
 
 }
