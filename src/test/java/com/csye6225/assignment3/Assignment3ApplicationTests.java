@@ -17,19 +17,15 @@ class Assignment3ApplicationTests {
     @Autowired
     private AccountService accountService;
 
-    int add(int x,int y) {
-        return x + y;
-    }
-    
     @Test
     void createAccount() {
 
-         Account account = new Account();
+        Account account = new Account();
         account.setFirstName("Chuangwei");
         account.setLastName("Qing");
         account.setPassword( "qcw123456789");
         account.setEmailAddress("123@qq.com");
-        Assert.assertSame("create fail", 2, add(1,1));
+        Assert.assertSame("create successfully", 1, accountService.createAccount(account));
     }
 
 }
