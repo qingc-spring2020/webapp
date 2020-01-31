@@ -20,12 +20,12 @@ class Assignment3ApplicationTests {
     @Test
     void createAccount() {
 
-        Account account = new Account();
+         Account account = new Account();
         account.setFirstName("Chuangwei");
         account.setLastName("Qing");
         account.setPassword( "qcw123456789");
         account.setEmailAddress("123@qq.com");
-        Assert.assertSame("create successfully", -1, accountService.createAccount(account));
+        Assert.assertSame("create fail", -1, accountService.createAccount(account));
     }
 
 }
