@@ -29,7 +29,7 @@ class Assignment3ApplicationTests {
         account.setLastName("Qing");
         account.setPassword( "qcw123456789");
         account.setEmailAddress("123@qq.com");
-        Assert.assertSame("create successfully", 1, add(0,1));
+        Assert.assertSame("create successfully", 1, add(0,1)));
     }
 
 }
