@@ -94,20 +94,19 @@ public class BillController {
                 if(accountService.login(userAccount[0],userAccount[1])) {
 
                     Bill bill = billService.getBillInfo(id);
+
                     if(!billInfo.containsKey("amount_due") || ((Double)billInfo.get("amount_due") < 0.01)){
                         jsonObject.put("message","amount_due must more than 0.01");
                         return jsonObject;
 
-                    }else {
-                        bill.setAmountDue((Double) billInfo.get("amount_due"));
                     }
-
 
                     if (bill == null) {
                         response.setStatus(401);
                         jsonObject.put("message", "bill is not existed");
                     } else {
-                        System.out.println("billId"+bill.getBillId());
+                        bill.setAmountDue((Double) billInfo.get("amount_due"));
+                        //System.out.println("billId"+bill.getBillId());
                         if(!bill.getOwnerId().equals(account.getUserId())) {
                             response.setStatus(400);
                             jsonObject.put("message","The bill does not belong to this account");

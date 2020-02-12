@@ -16,4 +16,8 @@ public interface BillService {
     Bill getBillInfo(String billId);
 
     Bill updateBillInfo(Bill bill);
+
+    void updateFileInfo(Bill bill, String fileId);
+
+    void deleteFileInfoByBill(Bill bill);
 }
