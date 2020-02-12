@@ -8,6 +8,7 @@ import com.csye6225.assignment3.mbg.model.BillExample;
 import com.csye6225.assignment3.service.BillService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Date;
 import java.util.List;
@@ -55,5 +56,17 @@ public class BillServiceImpl implements BillService {
         bill.setUpdatedTs(date);
         billMapper.updateByPrimaryKey(bill);
         return billMapper.selectByPrimaryKey(bill.getBillId());
+    }
+
+    @Override
+    public void updateFileInfo(Bill bill, String fileId) {
+        bill.setFileId(fileId);
+        billMapper.updateByPrimaryKey(bill);
+    }
+
+    @Override
+    public void deleteFileInfoByBill(Bill bill) {
+        bill.setFileId("");
+        billMapper.updateByPrimaryKey(bill);
     }
 }

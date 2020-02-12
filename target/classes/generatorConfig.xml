@@ -34,7 +34,7 @@
                              targetProject="src/main/java"/>
         <!--生成全部表tableName设为%-->
 
-        <table tableName="bill">
+        <table tableName="attached_file">
             <generatedKey column="id" sqlStatement="MySql" identity="true"/>
         </table>
 
