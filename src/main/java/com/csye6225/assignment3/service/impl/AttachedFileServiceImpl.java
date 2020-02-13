@@ -19,16 +19,18 @@ public class AttachedFileServiceImpl implements AttachedFileService {
 
 
     @Override
-    public AttachedFile saveFileToDataBase(String billId, String originalFileName, String uploadFileName) {
+    public AttachedFile saveFileToDataBase(String billId, String fileName, String md5, Long fileSize) {
 
         AttachedFile file = new AttachedFile();
         String uuid = UUID.randomUUID().toString();
         file.setFileId(uuid);
 
-        file.setFileName(originalFileName);
+        file.setFileName(fileName);
 
         //String initUrl = "/Users/ricardo/Desktop/csye6225_database_disk";
-        file.setUrl(dir+uploadFileName);
+        file.setUrl(dir+fileName);
+        file.setFileMd5(md5);
+        file.setFileSize(fileSize);
 
         fileMapper.insertSelective(file);
         return fileMapper.selectByPrimaryKey(uuid);

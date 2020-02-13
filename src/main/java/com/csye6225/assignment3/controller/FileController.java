@@ -10,11 +10,9 @@ import com.csye6225.assignment3.service.BillService;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
-import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
+
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.util.UriComponentsBuilder;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -22,6 +20,8 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.math.BigInteger;
+import java.security.MessageDigest;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -131,21 +131,33 @@ public class FileController {
                             }else {
 
                                 String originalFileName = frontFile.getOriginalFilename();
-                                String uploadFileName = frontFile.getOriginalFilename();
-                                String dir = "/Users/ricardo/Desktop/csye6225_file_disk/";
-                                saveFileToDisk(dir, frontFile);
+                                String contentType = frontFile.getContentType();
+                                if(!judgeFileType(contentType)) {
+                                    response.setStatus(400);
+                                    jsonObject.put("message", "wrong data type");
+                                }else {
 
-                                AttachedFile file = fileService.saveFileToDataBase(bill.getBillId(), originalFileName, uploadFileName);
-                                billService.updateFileInfo(bill, file.getFileId());
+                                    String dir = "/Users/ricardo/Desktop/csye6225_file_disk/";
+                                    String fileName = frontFile.getOriginalFilename()+"_"+bill.getBillId();
 
-                                jsonObject.put("file_name", file.getFileName());
-                                jsonObject.put("id", file.getFileId());
-                                jsonObject.put("url", file.getUrl());
-                                System.out.println(file.getFileId());
+                                    Long fileSize = frontFile.getSize();
+                                    String md5 = getMd5(frontFile);
 
-                                SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-                                String date = dateFormat.format(file.getUploadDate());
-                                jsonObject.put("upload_date", date);
+
+                                    AttachedFile file = fileService.saveFileToDataBase(bill.getBillId(), fileName, md5, fileSize);
+                                    billService.updateFileInfo(bill, file.getFileId());
+
+                                    saveFileToDisk(dir, frontFile, bill.getBillId());
+
+                                    jsonObject.put("file_name", file.getFileName());
+                                    jsonObject.put("id", file.getFileId());
+                                    jsonObject.put("url", file.getUrl());
+                                    System.out.println(file.getFileId());
+
+                                    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+                                    String date = dateFormat.format(file.getUploadDate());
+                                    jsonObject.put("upload_date", date);
+                                }
                             }
 
                         }
@@ -165,6 +177,28 @@ public class FileController {
         return jsonObject;
 
 
+    }
+
+    private String getMd5(MultipartFile frontFile) {
+        try {
+            byte[] uploadBytes = frontFile.getBytes();
+            MessageDigest md5 = MessageDigest.getInstance("MD5");
+            byte[] digest = md5.digest(uploadBytes);
+            String hashString = new BigInteger(1, digest).toString(16);
+            return hashString;
+        } catch (Exception e) {
+            new Exception("transfer md5 wrong");
+        }
+        return null;
+    }
+
+    private boolean judgeFileType(String contentType) {
+
+        String[] split = contentType.split("/");
+        if(split[1].equals("pdf") || split[1].equals("png") || split[1].equals("jpg") || split[1].equals("jpeg")) {
+            return true;
+        }else
+            return false;
     }
 
     @DeleteMapping("/v1/bill/{billId}/file/{fileId}")
@@ -226,10 +260,10 @@ public class FileController {
     }
 
 
-    private static void saveFileToDisk(String dir,MultipartFile frontFile) throws IOException {
+    private static void saveFileToDisk(String dir,MultipartFile frontFile, String fileId) throws IOException {
         //File dirFile = new File(dir);
         String filename = frontFile.getOriginalFilename();
-        File file = new File(dir+filename);
+        File file = new File(dir+filename+"_"+fileId);
         //file.createNewFile();
         System.out.println("-----------");
         System.out.println(file.getAbsolutePath());
