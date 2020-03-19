@@ -14,8 +14,8 @@ public class Assignment3Application {
 
     public static void main(String[] args) {
 
-        //AutoGenerator auto =  new AutoGenerator();
-        //auto.createDatabaseTable();
+        AutoGenerator auto =  new AutoGenerator();
+        auto.createDatabaseTable();
         //auto.createDatabaseTableConnection();
         //auto.createDir();
         SpringApplication.run(Assignment3Application.class, args);
