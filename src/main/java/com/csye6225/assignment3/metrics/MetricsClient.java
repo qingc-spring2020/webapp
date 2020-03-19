@@ -19,9 +19,6 @@ public class MetricsClient {
 
     @Bean
     public StatsDClient statsDClient() {
-        if(publishMetrics) {
             return new NonBlockingStatsDClient("csye6225", metricsHost, metricsPort);
-        }
-        return new NoOpStatsDClient();
     }
 }
