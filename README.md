@@ -1,4 +1,4 @@
-CircleCI 2.0 Java Demo Application using Maven and Spring
+CircleCI 2.0 Java Demo Application using Maven and Spring#
 
 This is an example application showcasing how to run a Java web on CircleCI 2.0.
 
