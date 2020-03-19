@@ -1,0 +1,16 @@
+version: 0.0
+os: linux
+
+
+files:
+  - source: ./target/assignment3-0.0.1-SNAPSHOT.jar
+    destination: /opt/tomcat/latest/webapps
+  - source: ./infrastructure/aws/codedeploy/afterInstall.sh
+    destination: /home/centos
+  - source: ./infrastructure/aws/codedeploy/start.sh
+    destination: /home/centos
+
+hooks:
+
+  ApplicationStart:
+    - location: ./infrastructure/aws/codedeploy/start.sh

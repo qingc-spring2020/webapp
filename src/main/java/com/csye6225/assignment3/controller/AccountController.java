@@ -4,7 +4,11 @@ import cn.hutool.json.JSONObject;
 
 import com.csye6225.assignment3.mbg.model.Account;
 import com.csye6225.assignment3.service.AccountService;
+import com.timgroup.statsd.StatsDClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
@@ -21,11 +25,23 @@ import java.util.Map;
 @RestController
 public class AccountController {
 
+    private final static Logger logger= LoggerFactory.getLogger(BillController.class);
+    @Autowired
+    private StatsDClient statsDClient;
+
     @Autowired
     AccountService accountService;
 
     @GetMapping("/v1/user/self")
     public Object getInfo(HttpServletRequest request,HttpServletResponse response) {
+
+        long start = System.currentTimeMillis();
+
+
+        statsDClient.incrementCounter("endpoint.login.http.get.count");
+
+        logger.info("Getting User authenticated");
+
         String auth = request.getHeader("Authorization");
         System.out.println("/v1/user/self/get");
         JSONObject jsonObject = new JSONObject(true);
@@ -54,6 +70,9 @@ public class AccountController {
 
                     jsonObject.put("account_created",account.getAccountCreated());
                     jsonObject.put("account_updated",account.getAccountUpdated());
+
+                    logger.info("User successfully authenticated");
+
                 }else {
                     jsonObject.put("message","Password is incorrect");
                 }
@@ -61,6 +80,10 @@ public class AccountController {
         }else {
             jsonObject.put("message","401 Unauthorized status");
         }
+
+        long end = System.currentTimeMillis();
+        statsDClient.recordExecutionTime("endpoint.login.http.get.time",end-start);
+
         return jsonObject;
     }
 
@@ -68,7 +91,11 @@ public class AccountController {
     @PostMapping("/v1/user")
     public Object register(@RequestBody Account account, HttpServletResponse response) throws IOException, ParseException {
 
-        System.out.println("/v1/user");
+        long start=System.currentTimeMillis();
+
+        statsDClient.incrementCounter("endpoint.user.http.post.count");
+        logger.info("Getting Account registered");
+        // System.out.println("/v1/user");
 
         JSONObject jsonObject = new JSONObject(true);
 
@@ -81,11 +108,19 @@ public class AccountController {
                 //response.getWriter().append("bad request");
                 jsonObject.put("message", "email conflict");
 
+                logger.error("Account already exist");
+                logger.info("Account Registered Response code: " + HttpStatus.CONFLICT);
+
             } else if (0 == accountService.createAccount(account)) {
+                logger.error("Password not accepted.Password must be greater than 8 characters with atleast one uppercase, one lowercase, one digit and one special character" );
+                logger.info("User Registered Response code: " + HttpStatus.BAD_REQUEST);
                 jsonObject.put("message", "please input a NIST password");
             } else if (-2 == accountService.createAccount(account)) {
                 jsonObject.put("message", "please input a right email");
             } else {
+
+
+
                 Account accountTemp = accountService.getAccountByEmail(account.getEmailAddress());
                 jsonObject.put("id",accountTemp.getUserId());
                 jsonObject.put("first_name",accountTemp.getFirstName());
@@ -103,8 +138,15 @@ public class AccountController {
 
                 jsonObject.put("account_created",accountTemp.getAccountCreated());
                 jsonObject.put("account_updated",accountTemp.getAccountUpdated());
+
+                logger.info("Account successfully registered");
             }
         }
+        logger.info("Account Registered Response code: " + HttpStatus.CREATED);
+
+        long end=System.currentTimeMillis();
+
+        statsDClient.recordExecutionTime("endpoint.login.http.post.time",end-start);
         return jsonObject;
 
     }
@@ -121,6 +163,13 @@ public class AccountController {
 
     @PutMapping("/v1/user/self")
     public Object update(@RequestBody Map<String, String> info, HttpServletRequest request,HttpServletResponse response) throws IOException {
+
+        long start=System.currentTimeMillis();
+
+        statsDClient.incrementCounter("endpoint.login.http.put.count");
+
+        logger.info("Update user information");
+
         String auth = request.getHeader("Authorization");
         System.out.println("/v1/user/self/put");
         JSONObject jsonObject = new JSONObject();
@@ -138,6 +187,7 @@ public class AccountController {
                     info.remove("accountUpdated");
                     Integer status = accountService.updateAccount(userAccount[0], info);
                     if(status == 0) {
+                        logger.info("Account does not exist in the system");
                         jsonObject.put("message","The account has not been created");
                     }else if (status == -1) {
                         response.setStatus(400);
@@ -159,6 +209,12 @@ public class AccountController {
             response.setStatus(401);
             jsonObject.put("message","401 Unauthorized status");
         }
+
+
+        long end=System.currentTimeMillis();
+
+        statsDClient.recordExecutionTime("endpoint.login.http.put.time",end-start);
+
         return jsonObject;
     }
 
