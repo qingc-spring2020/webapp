@@ -1,8 +1,10 @@
 package com.csye6225.assignment3.mbg.model;
 
+import javax.persistence.Entity;
 import java.io.Serializable;
 import java.util.Date;
 
+@Entity
 public class Account implements Serializable {
     /**
      *

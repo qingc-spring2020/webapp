@@ -105,6 +105,26 @@
             <version>4.12</version>
         </dependency>
 
+        <!-- https://mvnrepository.com/artifact/org.eclipse.persistence/javax.persistence -->
+        <dependency>
+            <groupId>org.eclipse.persistence</groupId>
+            <artifactId>javax.persistence</artifactId>
+            <version>2.2.1</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>aws-java-sdk</artifactId>
+            <version>1.11.469</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.timgroup</groupId>
+            <artifactId>java-statsd-client</artifactId>
+            <version>3.1.0</version>
+        </dependency>
+
+
     </dependencies>
 
     <build>

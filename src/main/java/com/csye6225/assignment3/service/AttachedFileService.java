@@ -5,7 +5,7 @@ import com.csye6225.assignment3.mbg.model.AttachedFile;
 
 public interface AttachedFileService {
 
-    AttachedFile saveFileToDataBase(String billId, String fileName, String md5, Long fileSize);
+    AttachedFile saveFileToDataBase(String billId, String fileName, String md5, Long fileSize,String url);
 
     AttachedFile getFileInfoById(String fileId);
 

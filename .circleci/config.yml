@@ -1,75 +1,56 @@
-version: 2 # use CircleCI 2.0
-jobs: # a collection of steps
-  pr_check:
+version: 2
+jobs:
+  build:
+    filters:
+      branches:
+        only:
+          - master
     docker:
-      - image: circleci/ruby:2.4-node
-      - image: circleci/postgres:9.4.12-alpine
+      - image: circleci/python:3.6.5
     steps:
       - checkout
-      - save_cache: # Caches dependencies with a cache key
-          key: v1-repo-{{ .Environment.CIRCLE_SHA1 }}
-          paths:
-            - ~/circleci-demo-workflows
-      - run: echo "A first helloworld"
-  build: # runs not using Workflows must have a `build` job as entry point
-
-    working_directory: ~/webapp # directory where steps will run
-
-    docker: # run the steps with Docker
-      - image: circleci/openjdk:8-jdk-stretch # ...with this image as the primary container; this is where all `steps` will run
-      - image: circleci/mysql:5.7
-        environment:
-          MYSQL_ROOT_PASSWORD: rootpw
-          MYSQL_DATABASE: test_db
-
-    steps: # a collection of executable commands
-
-      - checkout # check out source code to working directory
       - run:
-          # Our primary container isn't MYSQL so run a sleep command until it's ready.
-          name: Waiting for MySQL to be ready
+          name: Install packages
           command: |
-            for i in `seq 1 10`;
-            do
-              nc -z 127.0.0.1 3306 && echo Success && exit 0
-              echo -n .
-            sleep 1
-            done
-            echo Failed waiting for MySQL && exit 1
+            sudo apt update
+            sudo apt install openjdk-8-jdk
+            sudo pip install awscli
       - run:
-          name: Install MySQL CLI
+          name: Build JAR
           command: |
-            sudo apt-get update
-             #sudo apt-get install mysql-server
-             sudo apt-get install -y mysql-client
-             mysql -h 127.0.0.1 -u root -prootpw test_db < sql-data/yummy.sql
-             mysql -h 127.0.0.1 -u root -prootpw --execute="SELECT * FROM test_db.account"
-             mysql -h 127.0.0.1 -u root -prootpw --execute="SELECT * FROM test_db.bill"
-      - restore_cache: # restore the saved cache after the first run or if `pom.xml` has changed
-          # Read about caching dependencies: https://circleci.com/docs/2.0/caching/
-          key: webapp-{{ checksum "pom.xml" }}
+            pwd
+            ls
+            ./mvnw clean package
+            pwd
+            ls -al
+            pwd
+      - run:
+          name: Build Deployment Artifact
+          command: |
+            echo "The current build number is ${CIRCLE_BUILD_NUM}"
+            pwd
+            ls -al
+            mkdir -p codedeploy_artifact
+            zip -r csye6225_assignment_${CIRCLE_BUILD_NUM}.zip target/assignment3-0.0.1-SNAPSHOT.jar infrastructure/aws/codedeploy/*.sh appspec.yml
+            ls -al
+            mv csye6225_assignment_${CIRCLE_BUILD_NUM}.zip codedeploy_artifact/
+            ls -al
+            pwd
+            cd codedeploy_artifact
+            ls -al
+            pwd
+            cd ..
+            pwd
+            ls -al
 
-      - run: mvn dependency:go-offline # gets the project dependencies
-
-      - save_cache: # saves the project dependencies
-          paths:
-            - ~/.m2
-          key: webapp-{{ checksum "pom.xml" }}
-
-      - run: mvn package # run the actual tests
-
-      - store_test_results: # uploads the test metadata from the `target/surefire-reports` directory so that it can show up in the CircleCI dashboard.
-          # Upload test results for display in Test Summary: https://circleci.com/docs/2.0/collect-test-data/
-          path: target/surefire-reports
-
-      - store_artifacts: # store the uberjar as an artifact
-          # Upload test summary for display in Artifacts: https://circleci.com/docs/2.0/artifacts/
-          path: target/webapp-0.0.1-SNAPSHOT.jar
-workflows:
-  version: 2
-  build_deploy: # name of your workflow
-    jobs:
-      - build
-  pr-check:
-    jobs:
-      - pr_check
+      - run:
+          name: Upload Artifact to S3
+          command: aws s3 cp ./codedeploy_artifact/csye6225_assignment_${CIRCLE_BUILD_NUM}.zip s3://${S3_BUCKET_NAME}/csye6225_assignment_${CIRCLE_BUILD_NUM}.zip
+      - run:
+          name: Deploy artifact to ec2 instance
+          command: |
+            aws deploy create-deployment \
+            --application-name csye6225-webapp \
+            --deployment-group-name csye6225-webapp-deployment \
+            --s3-location bucket=${S3_BUCKET_NAME},bundleType=zip,key=csye6225_assignment_${CIRCLE_BUILD_NUM}.zip \
+            --region ${AWS_REGION}

@@ -6,7 +6,11 @@ import com.csye6225.assignment3.mbg.model.Account;
 import com.csye6225.assignment3.mbg.model.Bill;
 import com.csye6225.assignment3.service.AccountService;
 import com.csye6225.assignment3.service.BillService;
+import com.timgroup.statsd.StatsDClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
@@ -21,6 +25,11 @@ import java.util.Map;
 @RestController
 public class BillController {
 
+    private final static Logger logger = LoggerFactory.getLogger(BillController.class);
+
+    @Autowired
+    private StatsDClient statsDClient;
+
     @Autowired
     AccountService accountService;
     @Autowired
@@ -28,6 +37,13 @@ public class BillController {
 
     @GetMapping("/v1/bills")
     public Object getAllBillInfo(HttpServletRequest request,HttpServletResponse response) {
+
+
+        long start=System.currentTimeMillis();
+
+        statsDClient.incrementCounter("endpoint.allBills.http.get");
+        logger.info("Get all bills");
+
         String auth = request.getHeader("Authorization");
         JSONObject jsonObject = new JSONObject(true);
         System.out.println("auth"+auth);
@@ -68,6 +84,7 @@ public class BillController {
                         ++i;
                         String str = "bill" + i;
                         jsonObject.put(str,jsonObject1);
+
                     }
                 }else {
                     jsonObject.put("message","Password is incorrect");
@@ -76,11 +93,23 @@ public class BillController {
         }else {
             jsonObject.put("message","401 Unauthorized status");
         }
+        logger.info("Get all Bills Successful- Response code: " + HttpStatus.OK);
+
+
+        long end=System.currentTimeMillis();
+
+        statsDClient.recordExecutionTime("endpoint.login.http.getBills.time",end-start);
         return jsonObject;
     }
 
     @PutMapping("/v1/bill/{id}")
     public Object updateBillInfo(@PathVariable("id") String id, @RequestBody Map<String, Object> billInfo, HttpServletRequest request,HttpServletResponse response) throws ParseException {
+
+        long start=System.currentTimeMillis();
+
+        statsDClient.incrementCounter("endpoint.updateBook.http.put");
+        logger.info("Update Bill request " + id);
+
         String auth = request.getHeader("Authorization");
         JSONObject jsonObject = new JSONObject(true);
         System.out.println("auth"+auth);
@@ -102,6 +131,8 @@ public class BillController {
                     }
 
                     if (bill == null) {
+                        logger.error("Validation failed for request: Bill cannot be null. ID: "+ id );
+
                         response.setStatus(401);
                         jsonObject.put("message", "bill is not existed");
                     } else {
@@ -175,6 +206,8 @@ public class BillController {
                             jsonObject.put("categories",billTemp.getCategories());
                             jsonObject.put("paymentStatus",billTemp.getPaymentStatus());
 
+                            logger.info("Update Bill Successful- Response code: " + HttpStatus.NO_CONTENT);
+
 
 
 
@@ -188,12 +221,23 @@ public class BillController {
         }else {
             jsonObject.put("message","401 Unauthorized status");
         }
+
+        long end=System.currentTimeMillis();
+        statsDClient.recordExecutionTime("endpoint.login.http.updateBill.time",end-start);
+
+
         return jsonObject;
 
     }
 
+
     @DeleteMapping("/v1/bill/{id}")
     public Object deleteBillInfo(@PathVariable("id") String id, HttpServletRequest request, HttpServletResponse response) {
+
+        long start=System.currentTimeMillis();
+        statsDClient.incrementCounter("endpoint.deleteBill.http.delete");
+        logger.info("Delete bill by id:" + id);
+
         String auth = request.getHeader("Authorization");
         JSONObject jsonObject = new JSONObject(true);
         System.out.println("auth"+auth);
@@ -208,6 +252,8 @@ public class BillController {
 
                     Bill bill = billService.getBillInfo(id);
                     if (bill == null) {
+                        logger.warn("Bill ID " + id + " not found. " );
+
                         response.setStatus(404);
                         jsonObject.put("message", "bill is not existed");
                     } else {
@@ -216,6 +262,8 @@ public class BillController {
                             response.setStatus(400);
                             jsonObject.put("message","The bill does not belong to this account");
                         }else {
+                            logger.info("Delete Bill Successful- Response code: " + HttpStatus.NO_CONTENT);
+
                             billService.deleteBill(id);
                             jsonObject.put("message","successfully");
                         }
@@ -228,11 +276,22 @@ public class BillController {
         }else {
             jsonObject.put("message","401 Unauthorized status");
         }
+        long end=System.currentTimeMillis();
+
+        statsDClient.recordExecutionTime("endpoint.login.http.deleteBill.time",end-start);
+
         return jsonObject;
     }
 
     @GetMapping("/v1/bill/{id}")
     public Object getBillInfo(@PathVariable("id") String id, HttpServletRequest request, HttpServletResponse response) {
+
+        long start=System.currentTimeMillis();
+        statsDClient.incrementCounter("endpoint.billById.http.get");
+        logger.info("Searching bill by id: " + id);
+
+
+
         String auth = request.getHeader("Authorization");
         JSONObject jsonObject = new JSONObject(true);
         System.out.println("auth"+auth);
@@ -248,6 +307,10 @@ public class BillController {
                 if(accountService.login(userAccount[0],userAccount[1])) {
                     Bill bill = billService.getBillInfo(id);
                     if (bill == null) {
+
+                        logger.warn("Bill ID " +id + " not found. " );
+                        logger.info("Get bill by Id- Response code: " + HttpStatus.NOT_FOUND);
+
                         response.setStatus(404);
                         jsonObject.put("message", "bill is not existed");
                     } else {
@@ -255,6 +318,10 @@ public class BillController {
                             response.setStatus(400);
                             jsonObject.put("message","The bill does not belong to this account");
                         }else {
+
+                            logger.info("Bill returned: id" + id);
+                            logger.info("Get bill by Id Successful- Response code: " + HttpStatus.OK);
+
                             jsonObject.put("id", bill.getBillId());
                             jsonObject.put("created_ts", bill.getCreatedTs());
                             jsonObject.put("updated_ts", bill.getUpdatedTs());
@@ -286,11 +353,21 @@ public class BillController {
         }else {
             jsonObject.put("message","401 Unauthorized status");
         }
+        long end=System.currentTimeMillis();
+
+        statsDClient.recordExecutionTime("endpoint.login.http.getBill.time",end-start);
+
         return jsonObject;
     }
 
     @PostMapping("/v1/bill/")
     public Object createBill(@RequestBody Map<String,Object> billInfo , HttpServletRequest request, HttpServletResponse response) throws ParseException {
+
+        long start=System.currentTimeMillis();
+
+        statsDClient.incrementCounter("endpoint.addBill.http.post");
+        logger.info("Add bill request ");
+
         String auth = request.getHeader("Authorization");
         System.out.println("/v1/bill/");
         JSONObject jsonObject = new JSONObject(true);
@@ -299,6 +376,8 @@ public class BillController {
             String[] userAccount = decode(auth);
             Account account = accountService.getAccountByEmail(userAccount[0]);
             if(account == null) {
+
+
                 response.setStatus(401);
                 jsonObject.put("message","401 Unauthorized status");
             }else {
@@ -373,6 +452,8 @@ public class BillController {
                     jsonObject.put("categories",billTemp.getCategories());
                     jsonObject.put("paymentStatus",billTemp.getPaymentStatus());
 
+                    logger.info("Add Bill Successful- Response code: " + HttpStatus.CREATED);
+
                 }else {
                     jsonObject.put("message","Password is incorrect");
                 }
@@ -381,6 +462,10 @@ public class BillController {
             response.setStatus(401);
             jsonObject.put("message","401 Unauthorized status");
         }
+
+        long end=System.currentTimeMillis();
+        statsDClient.recordExecutionTime("endpoint.login.http.createBill.time",end-start);
+
         return jsonObject;
     }
 

@@ -5,9 +5,13 @@ import com.csye6225.assignment3.mbg.model.Account;
 import com.csye6225.assignment3.mbg.model.AttachedFile;
 import com.csye6225.assignment3.mbg.model.Bill;
 import com.csye6225.assignment3.service.AccountService;
+import com.csye6225.assignment3.service.AmazonS3ImageService;
 import com.csye6225.assignment3.service.AttachedFileService;
 import com.csye6225.assignment3.service.BillService;
 
+import com.timgroup.statsd.StatsDClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 
@@ -28,7 +32,12 @@ import java.util.*;
 @RestController
 public class FileController {
 
-    private final static String initDir = "/Users/ricardo/Desktop/csye6225_file_disk/";
+    private final static Logger logger = LoggerFactory.getLogger(FileController.class);
+
+    @Autowired
+    private StatsDClient statsDClient;
+
+    private final static String initDir = "/home/ubuntu/csye6225_file_disk/";
 
     //private final static Logger logger = LoggerFactory.getLogger(FileController.class);
 
@@ -39,10 +48,16 @@ public class FileController {
     @Autowired
     AttachedFileService fileService;
     @Autowired
-    private Environment environment;
+    AmazonS3ImageService s3ImageService;
 
     @GetMapping("/v1/bill/{billId}/file/{fileId}")
     public Object getFileInfo(@PathVariable("billId") String billId, @PathVariable("fileId") String fileId, HttpServletRequest request, HttpServletResponse response) {
+
+
+        long start=System.currentTimeMillis();
+
+        statsDClient.incrementCounter("endpoint.file.http.get");
+        logger.info("Getting file-id" +fileId+ " for bill-id" +billId) ;
 
         String auth = request.getHeader("Authorization");
         JSONObject jsonObject = new JSONObject(true);
@@ -95,12 +110,21 @@ public class FileController {
         }else {
             jsonObject.put("message","401 Unauthorized status");
         }
+        long end=System.currentTimeMillis();
+        statsDClient.recordExecutionTime("endpoint.login.http.getFileInfo.time",end-start);
+
         return jsonObject;
 
     }
 
     @PostMapping("/v1/bill/{id}/file")
     public Object updateFile(@PathVariable String id , @RequestPart("file") MultipartFile frontFile,HttpServletRequest request, HttpServletResponse response) throws IOException {
+
+        long start=System.currentTimeMillis();
+
+        statsDClient.incrementCounter("endpoint.file.http.post");
+
+
         String auth = request.getHeader("Authorization");
         JSONObject jsonObject = new JSONObject(true);
         if(null != auth) {
@@ -118,13 +142,18 @@ public class FileController {
                         jsonObject.put("message","Bill Id not found");
                         //throw new ResourceNotFoundException("Bill Id not found");
                     } else {
+                        logger.info("Getting image for Bill-id :" +bill.getBillId());
+
                         if(!bill.getOwnerId().equals(account.getUserId())) {
+
                             response.setStatus(400);
                             jsonObject.put("message","Bill conflict");
                             //throw new ResourceNotFoundException("Bill conflict");
                         }else {
 
                             if(null != bill.getFileId()) {
+                                logger.error("File already present for bill-id" +bill.getBillId());
+
                                 response.setStatus(404);
                                 jsonObject.put("message","File conflict");
                                 //throw new Exception("File conflict");
@@ -137,17 +166,20 @@ public class FileController {
                                     jsonObject.put("message", "wrong data type");
                                 }else {
 
-                                    String dir = "/Users/ricardo/Desktop/csye6225_file_disk/";
-                                    String fileName = frontFile.getOriginalFilename()+"_"+bill.getBillId();
+                                    String dir = "/home/ubuntu/csye6225_file_disk/";
+                                    String fileName = bill.getBillId()+"_"+frontFile.getOriginalFilename();
 
                                     Long fileSize = frontFile.getSize();
                                     String md5 = getMd5(frontFile);
 
+                                    logger.info("Saving details in s3 and database");
 
-                                    AttachedFile file = fileService.saveFileToDataBase(bill.getBillId(), fileName, md5, fileSize);
+                                    String url = s3ImageService.uploadImageToS3(bill, frontFile);
+                                    System.out.println("url:"+url);
+                                    AttachedFile file = fileService.saveFileToDataBase(bill.getBillId(), fileName, md5, fileSize, url);
                                     billService.updateFileInfo(bill, file.getFileId());
 
-                                    saveFileToDisk(dir, frontFile, bill.getBillId());
+                                    //saveFileToDisk(dir, frontFile, bill.getBillId());
 
                                     jsonObject.put("file_name", file.getFileName());
                                     jsonObject.put("id", file.getFileId());
@@ -174,6 +206,11 @@ public class FileController {
             jsonObject.put("message","401 Unauthorized status");
         }
         System.out.println("file.getFileId()");
+
+
+        long end=System.currentTimeMillis();
+
+        statsDClient.recordExecutionTime("endpoint.login.http.updateFile.time",end-start);
         return jsonObject;
 
 
@@ -203,6 +240,11 @@ public class FileController {
 
     @DeleteMapping("/v1/bill/{billId}/file/{fileId}")
     public Object deleteBillInfo(@PathVariable("billId") String billId, @PathVariable("fileId") String fileId,HttpServletRequest request, HttpServletResponse response) {
+
+        long start=System.currentTimeMillis();
+        statsDClient.incrementCounter("endpoint.file.http.delete");
+        logger.info("Deleting file" +fileId+ " for bill" +billId) ;
+
         String auth = request.getHeader("Authorization");
         JSONObject jsonObject = new JSONObject(true);
         System.out.println("auth"+auth);
@@ -234,6 +276,11 @@ public class FileController {
                                 billService.deleteFileInfoByBill(bill);
                                 fileService.deleteFileInfoById(fileId);
 
+                                logger.info("file deleted from S3 bucket") ;
+
+                                s3ImageService.deleteImageFromS3(file);
+                                System.out.println("delete file.getUrl()="+file.getUrl());
+
                                 jsonObject.put("message", "successfully");
                             }
                         }
@@ -246,6 +293,9 @@ public class FileController {
         }else {
             jsonObject.put("message","401 Unauthorized status");
         }
+
+        long end=System.currentTimeMillis();
+        statsDClient.recordExecutionTime("endpoint.login.http.deleteBillInfo.time",end-start);
         return jsonObject;
     }
 

@@ -5,6 +5,7 @@ import com.csye6225.assignment3.mbg.mapper.AccountMapper;
 import com.csye6225.assignment3.mbg.model.Account;
 import com.csye6225.assignment3.mbg.model.AccountExample;
 import com.csye6225.assignment3.service.AccountService;
+import com.timgroup.statsd.StatsDClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -18,9 +19,13 @@ public class AccountServiceImpl implements AccountService {
     static final Integer salt = 5;
     @Autowired
     AccountMapper accountMapper;
+    @Autowired
+    private StatsDClient statsDClient;
 
     @Override
     public int createAccount(Account account) {
+
+        long start=System.currentTimeMillis();
 
         if(!verify(account.getPassword())) {
             return 0;
@@ -44,14 +49,21 @@ public class AccountServiceImpl implements AccountService {
         account.setPassword(passwordHash);
         account.setAccountCreated(date);
         account.setAccountUpdated(date);
+        long end=System.currentTimeMillis();
+        statsDClient.recordExecutionTime("endpoint.login.http.createAccount.time",end-start);
         return accountMapper.insertSelective(account);
     }
 
     @Override
     public Account getAccountByEmail(String email) {
+        long start=System.currentTimeMillis();
         AccountExample example = new AccountExample();
         example.createCriteria().andEmailAddressEqualTo(email);
         List<Account> accountList = accountMapper.selectByExample(example);
+        long end=System.currentTimeMillis();
+        statsDClient.recordExecutionTime("endpoint.login.http.getAccountByEmail.time",end-start);
+
+
         if(accountList != null && accountList.size() > 0) {
             return accountList.get(0);
         }
@@ -60,6 +72,9 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public int updateAccount(String email, Map<String, String> info) {
+
+        long start=System.currentTimeMillis();
+
         Account account = getAccountByEmail(email);
 
         for(Map.Entry<String, String> entry : info.entrySet()) {
@@ -86,6 +101,8 @@ public class AccountServiceImpl implements AccountService {
             }
         }
         account.setAccountUpdated(new Date());
+        long end=System.currentTimeMillis();
+        statsDClient.recordExecutionTime("endpoint.login.http.updateAccount.time",end-start);
         return accountMapper.updateByPrimaryKeySelective(account);
     }
 

@@ -6,6 +6,7 @@ import com.csye6225.assignment3.mbg.model.AccountExample;
 import com.csye6225.assignment3.mbg.model.Bill;
 import com.csye6225.assignment3.mbg.model.BillExample;
 import com.csye6225.assignment3.service.BillService;
+import com.timgroup.statsd.StatsDClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RestController;
@@ -19,15 +20,21 @@ public class BillServiceImpl implements BillService {
 
     @Autowired
     BillMapper billMapper;
+    @Autowired
+    private StatsDClient statsDClient;
+
     @Override
     public Bill createBill(Bill bill) {
 
+        long start=System.currentTimeMillis();
         String uuid = UUID.randomUUID().toString();
         bill.setBillId(uuid);
         Date date = new Date();
         bill.setUpdatedTs(date);
         bill.setCreatedTs(date);
         billMapper.insertSelective(bill);
+        long end=System.currentTimeMillis();
+        statsDClient.recordExecutionTime("endpoint.login.http.createBill.time",end-start);
         return billMapper.selectByPrimaryKey(uuid);
     }
 
@@ -39,9 +46,12 @@ public class BillServiceImpl implements BillService {
 
     @Override
     public List<Bill> getAllBillInfo(String ownerId) {
+        long start=System.currentTimeMillis();
         BillExample example = new BillExample();
         example.createCriteria().andOwnerIdEqualTo(ownerId);
         List<Bill> billList = billMapper.selectByExample(example);
+        long end=System.currentTimeMillis();
+        statsDClient.recordExecutionTime("endpoint.login.http.getAllBillInfo.time",end-start);
         return billList;
     }
 
@@ -52,9 +62,14 @@ public class BillServiceImpl implements BillService {
 
     @Override
     public Bill updateBillInfo(Bill bill) {
+        long start=System.currentTimeMillis();
         Date date = new Date();
         bill.setUpdatedTs(date);
         billMapper.updateByPrimaryKey(bill);
+        long end=System.currentTimeMillis();
+        statsDClient.recordExecutionTime("endpoint.login.http.updateBillInfo.time",end-start);
+
+
         return billMapper.selectByPrimaryKey(bill.getBillId());
     }
 
