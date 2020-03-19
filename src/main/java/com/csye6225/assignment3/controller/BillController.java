@@ -35,7 +35,7 @@ public class BillController {
     @Autowired
     BillService billService;
 
-    @GetMapping("/v2/bills")
+    @GetMapping("/v1/bills")
     public Object getAllBillInfo(HttpServletRequest request,HttpServletResponse response) {
 
 
