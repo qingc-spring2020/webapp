@@ -219,11 +219,6 @@ public class AccountController {
     }
 
 
-    @GetMapping("/")
-    public String login() {
-        return "welcome!";
-    }
-
 
 
 }
