@@ -25,6 +25,7 @@ public class SQSFIFOJavaClientExample {
 
     public SQSFIFOJavaClientExample() {
 
+        logger.info("create SQSFIFOJavaClientExample instance");
         try {
             CreateQueueResult create_result = sqs.createQueue("testQueue");
         } catch (AmazonSQSException e) {
