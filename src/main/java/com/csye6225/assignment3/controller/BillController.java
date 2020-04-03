@@ -473,7 +473,7 @@ public class BillController {
     }
 
     @GetMapping("/v1/bills/due/{day}")
-    public Object getBillList(@PathVariable("day") Integer day,HttpServletRequest request,HttpServletResponse response){
+    public Object getBillList(@PathVariable("day") String day,HttpServletRequest request,HttpServletResponse response){
         long start=System.currentTimeMillis();
 
         statsDClient.incrementCounter("endpoint.getBillList.http.get");
@@ -490,13 +490,22 @@ public class BillController {
                 jsonObject.put("message","401 Unauthorized status");
             }else {
                 if(accountService.login(userAccount[0],userAccount[1])) {
+
+                    int days = 0;
+                    try {
+                      days = Integer.parseInt(day);
+                    }catch(NumberFormatException x) {
+                        jsonObject.put("message","wrong day number");
+                        return jsonObject;
+                    }
+
                     List<Bill> billList = billService.getAllBillInfo(account.getUserId());
                     int i = 0;
                     Date currentTime = new Date();
                     String message = "";
                     for(Bill bill : billList) {
 
-                        if(isValidDistanceTime(bill.getDueDate(), currentTime,day)) {
+                        if(isValidDistanceTime(bill.getDueDate(), currentTime,days)) {
                             message = message + "url: http://prod.qingc.me//v1/bill/" + bill.getBillId()+"; ";
                         }
 
