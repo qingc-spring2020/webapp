@@ -25,7 +25,14 @@ public class SQSFIFOJavaClientExample {
 
     public SQSFIFOJavaClientExample() {
 
-        this.myQueueUrl = sqs.getQueueUrl("csye6225_queue.fifo").getQueueUrl();
+        try {
+            CreateQueueResult create_result = sqs.createQueue("testQueue");
+        } catch (AmazonSQSException e) {
+            if (!e.getErrorCode().equals("QueueAlreadyExists")) {
+                throw e;
+            }
+        }
+        this.myQueueUrl = sqs.getQueueUrl("testQueue").getQueueUrl();
 
     }
 
