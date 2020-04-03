@@ -5,11 +5,13 @@ import org.mybatis.generator.exception.InvalidConfigurationException;
 import org.mybatis.generator.exception.XMLParserException;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 import java.io.IOException;
 import java.sql.SQLException;
 
 @SpringBootApplication
+@EnableScheduling
 public class Assignment3Application {
 
     public static void main(String[] args) {
