@@ -35,8 +35,7 @@ public class BillController {
     AccountService accountService;
     @Autowired
     BillService billService;
-    @Autowired
-    SQSFIFOJavaClientExample sqsfifoJavaClientExample;
+
 
     @GetMapping("/v1/bills")
     public Object getAllBillInfo(HttpServletRequest request,HttpServletResponse response) {
@@ -470,65 +469,6 @@ public class BillController {
         statsDClient.recordExecutionTime("endpoint.login.http.createBill.time",end-start);
 
         return jsonObject;
-    }
-
-    @GetMapping("/v1/bills/due/{day}")
-    public Object getBillList(@PathVariable("day") String day,HttpServletRequest request,HttpServletResponse response){
-        long start=System.currentTimeMillis();
-
-        statsDClient.incrementCounter("endpoint.getBillList.http.get");
-        logger.info("send all bills");
-
-        String auth = request.getHeader("Authorization");
-        JSONObject jsonObject = new JSONObject(true);
-        System.out.println("auth"+auth);
-        if(null != auth) {
-            String[] userAccount = decode(auth);
-            Account account = accountService.getAccountByEmail(userAccount[0]);
-            if(account == null) {
-                response.setStatus(401);
-                jsonObject.put("message","401 Unauthorized status");
-            }else {
-                if(accountService.login(userAccount[0],userAccount[1])) {
-
-                    int days = 0;
-                    try {
-                      days = Integer.parseInt(day);
-                    }catch(NumberFormatException x) {
-                        jsonObject.put("message","wrong day number");
-                        return jsonObject;
-                    }
-
-                    List<Bill> billList = billService.getAllBillInfo(account.getUserId());
-                    int i = 0;
-                    Date currentTime = new Date();
-                    String message = "";
-                    for(Bill bill : billList) {
-
-                        if(isValidDistanceTime(bill.getDueDate(), currentTime,days)) {
-                            message = message + "url: http://prod.qingc.me//v1/bill/" + bill.getBillId()+"; ";
-                        }
-
-                    }
-                    sqsfifoJavaClientExample.sendMessage(message);
-                    logger.info("send to SQS successfully");
-                    jsonObject.put("message","send to SQS successfully");
-                }else {
-                    jsonObject.put("message","Password is incorrect");
-                }
-            }
-        }else {
-            response.setStatus(401);
-            jsonObject.put("message","401 Unauthorized status");
-        }
-        logger.info("Send all Bills Successful- Response code: " + HttpStatus.OK);
-
-
-        long end=System.currentTimeMillis();
-
-        statsDClient.recordExecutionTime("endpoint.login.http.sendBills.time",end-start);
-        return jsonObject;
-
     }
 
     private boolean isValidDistanceTime(Date billDate, Date currentTime, Integer day) {
