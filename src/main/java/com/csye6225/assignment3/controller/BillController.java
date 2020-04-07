@@ -18,10 +18,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Base64;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @RestController
 public class BillController {
@@ -500,19 +497,26 @@ public class BillController {
                     }
 
                     List<Bill> billList = billService.getAllBillInfo(account.getUserId());
+                    List<String> dueBillList = new ArrayList<>();
                     int i = 0;
                     Date currentTime = new Date();
-                    String message = "";
+
                     for(Bill bill : billList) {
 
                         if(isValidDistanceTime(bill.getDueDate(), currentTime,days)) {
-                            message = message + "url: http://prod.qingc.me//v1/bill/" + bill.getBillId()+"; ";
+                            dueBillList.add(bill.getBillId());
                         }
 
                     }
-                    sqsfifoJavaClientExample.sendMessage(message);
-                    logger.info("send to SQS successfully");
-                    jsonObject.put("message","send to SQS successfully");
+                    if(dueBillList.isEmpty()) {
+                        jsonObject.put("message","No bill information");
+                    }else {
+                        String message = account.getEmailAddress() + "," + days+","
+                                + dueBillList.toString().substring(1, dueBillList.toString().length() - 1).replaceAll("\\s+", "");
+                        sqsfifoJavaClientExample.sendMessage(message);
+                        logger.info("send to SQS successfully");
+                        jsonObject.put("message", "send to SQS successfully");
+                    }
                 }else {
                     jsonObject.put("message","Password is incorrect");
                 }

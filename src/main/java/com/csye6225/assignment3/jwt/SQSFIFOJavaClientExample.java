@@ -1,7 +1,12 @@
 package com.csye6225.assignment3.jwt;
 
 
+import com.amazonaws.auth.AWSCredentials;
+import com.amazonaws.auth.AWSStaticCredentialsProvider;
+import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.iotdata.model.PublishRequest;
+import com.amazonaws.services.sns.AmazonSNS;
+import com.amazonaws.services.sns.AmazonSNSClientBuilder;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
 import com.amazonaws.services.sqs.model.*;
@@ -21,31 +26,42 @@ public class SQSFIFOJavaClientExample {
     private String myQueueUrl;
     static final AmazonSQS sqs = AmazonSQSClientBuilder.defaultClient();
     private final static Logger logger = LoggerFactory.getLogger(BillController.class);
+    //
+    private AmazonSNS sns;
 
 
     public SQSFIFOJavaClientExample() {
 
-        this.myQueueUrl = sqs.getQueueUrl("csye6225_queue.fifo").getQueueUrl();
+        logger.info("create SQSFIFOJavaClientExample instance");
+        try {
+            CreateQueueResult create_result = sqs.createQueue("testQueue");
+        } catch (AmazonSQSException e) {
+            if (!e.getErrorCode().equals("QueueAlreadyExists")) {
+                throw e;
+            }
+        }
+        this.myQueueUrl = sqs.getQueueUrl("testQueue").getQueueUrl();
+
+        //
+        AWSCredentials credentials = new BasicAWSCredentials("AKIAYSB5MWPWNSLOCAXM", "9DlRe+8TanUsp5GyOeL2onn5K0o3nBFW6wwPtoEb");
+        this.sns = AmazonSNSClientBuilder.standard().withCredentials(new AWSStaticCredentialsProvider(credentials)).build();
+
+
 
     }
 
     @Scheduled(fixedRate = 6000 * 3)
     public void receiveMessages() {
         // Receive messages.
-        logger.info("Receiving messages from MyFifoQueue.fifo.\n");
-        final ReceiveMessageRequest receiveMessageRequest =
-                new ReceiveMessageRequest(myQueueUrl);
-
+        logger.info("Receiving messages from "+myQueueUrl);
         // Uncomment the following to provide the ReceiveRequestDeduplicationId
         //receiveMessageRequest.setReceiveRequestAttemptId("1");
-        final List<Message> messages = sqs.receiveMessage(receiveMessageRequest)
-                .getMessages();
+        final List<Message> messages = sqs.receiveMessage(myQueueUrl).getMessages();
         for (final Message message : messages) {
-            for (final Entry<String, String> entry : message.getAttributes()
-                    .entrySet()) {
-                logger.info("  Message:  " + message.toString());
-                logger.info("  Name:  " + entry.getKey() + "  Value: " + entry.getValue());
-            }
+
+            logger.info("Message:  " + message.getBody());
+            sns.publish("arn:aws:sns:us-east-1:588539278316:MyTopic",message.getBody());
+            logger.info("Publishing  message:  " + message.getBody()+" to MyTopic");
         }
 
     }
@@ -53,23 +69,28 @@ public class SQSFIFOJavaClientExample {
     public void sendMessage(String message) {
 
         // Send a message.
-        logger.info("Sending a message to csye6225_queue.fifo.");
-        final SendMessageRequest sendMessageRequest =
-                new SendMessageRequest(myQueueUrl,
-                        message);
+        logger.info("Sending a message to " + this.myQueueUrl);
+
+        if(message.isEmpty()){
+            logger.info("No message being sent to " + this.myQueueUrl);
+            return;
+        }
+
+        SendMessageRequest sendMessageRequest =
+                new SendMessageRequest().withQueueUrl(myQueueUrl).withMessageBody(message);
 
         /*
          * When you send messages to a FIFO queue, you must provide a
          * non-empty MessageGroupId.
          */
-        sendMessageRequest.setMessageGroupId("messageGroup1");
+        //sendMessageRequest.setMessageGroupId("messageGroup1");
 
         // Uncomment the following to provide the MessageDeduplicationId
         //sendMessageRequest.setMessageDeduplicationId("1");
-        final SendMessageResult sendMessageResult = sqs
+        SendMessageResult sendMessageResult = sqs
                 .sendMessage(sendMessageRequest);
-        final String sequenceNumber = sendMessageResult.getSequenceNumber();
-        final String messageId = sendMessageResult.getMessageId();
+        String sequenceNumber = sendMessageResult.getSequenceNumber();
+        String messageId = sendMessageResult.getMessageId();
         logger.info("SendMessage succeed with messageId "
                 + messageId + ", sequence number " + sequenceNumber + "\n");
 
