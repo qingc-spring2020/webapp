@@ -43,7 +43,7 @@ public class SQSFIFOJavaClientExample {
         this.myQueueUrl = sqs.getQueueUrl("testQueue").getQueueUrl();
 
         //
-        AWSCredentials credentials = new BasicAWSCredentials("AKIAYSB5MWPWNSLOCAXM", "9DlRe+8TanUsp5GyOeL2onn5K0o3nBFW6wwPtoEb");
+        AWSCredentials credentials = new BasicAWSCredentials("AKIAVEFNXYRYWIO4NI5C", "AwKOfREjgxq1K/YE5p4qOvA4aNZfGzFe//AWf9L7");
         this.sns = AmazonSNSClientBuilder.standard().withCredentials(new AWSStaticCredentialsProvider(credentials)).build();
 
 
