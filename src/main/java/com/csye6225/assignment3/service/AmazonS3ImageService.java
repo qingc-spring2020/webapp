@@ -47,7 +47,7 @@ public class AmazonS3ImageService {
     @Autowired
     public AmazonS3ImageService() throws IOException {
         //this.amazonS3 = AmazonS3ClientBuilder.standard().withCredentials(new InstanceProfileCredentialsProvider(false)).build();
-        AWSCredentials credentials = new BasicAWSCredentials("AKIAYSB5MWPWNSLOCAXM", "9DlRe+8TanUsp5GyOeL2onn5K0o3nBFW6wwPtoEb");
+        AWSCredentials credentials = new BasicAWSCredentials("AKIAVEFNXYRYWIO4NI5C", "AwKOfREjgxq1K/YE5p4qOvA4aNZfGzFe//AWf9L7");
         this.amazonS3 = new AmazonS3Client(credentials);
         this.s3BucketName = getBucketName(bucketPath);
         System.out.println("this.s3BucketName:"+this.s3BucketName);

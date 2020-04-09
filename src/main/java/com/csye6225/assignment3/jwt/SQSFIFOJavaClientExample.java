@@ -43,29 +43,14 @@ public class SQSFIFOJavaClientExample {
         this.myQueueUrl = sqs.getQueueUrl("testQueue").getQueueUrl();
 
         //
-        AWSCredentials credentials = new BasicAWSCredentials("AKIAYSB5MWPWNSLOCAXM", "9DlRe+8TanUsp5GyOeL2onn5K0o3nBFW6wwPtoEb");
+        AWSCredentials credentials = new BasicAWSCredentials("AKIAVEFNXYRYWIO4NI5C", "AwKOfREjgxq1K/YE5p4qOvA4aNZfGzFe//AWf9L7");
         this.sns = AmazonSNSClientBuilder.standard().withCredentials(new AWSStaticCredentialsProvider(credentials)).build();
 
 
 
     }
 
-    @Scheduled(fixedRate = 6000 * 3)
-    public void receiveMessages() {
-        // Receive messages.
-        logger.info("Receiving messages from "+myQueueUrl);
-        // Uncomment the following to provide the ReceiveRequestDeduplicationId
-        //receiveMessageRequest.setReceiveRequestAttemptId("1");
-        final List<Message> messages = sqs.receiveMessage(myQueueUrl).getMessages();
-        for (final Message message : messages) {
-
-            logger.info("Message:  " + message.getBody());
-            sns.publish("arn:aws:sns:us-east-1:588539278316:MyTopic",message.getBody());
-            logger.info("Publishing  message:  " + message.getBody()+" to MyTopic");
-        }
-
-    }
-
+   
     public void sendMessage(String message) {
 
         // Send a message.
