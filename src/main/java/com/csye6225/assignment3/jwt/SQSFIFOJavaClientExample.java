@@ -50,22 +50,7 @@ public class SQSFIFOJavaClientExample {
 
     }
 
-    @Scheduled(fixedRate = 6000 * 3)
-    public void receiveMessages() {
-        // Receive messages.
-        logger.info("Receiving messages from "+myQueueUrl);
-        // Uncomment the following to provide the ReceiveRequestDeduplicationId
-        //receiveMessageRequest.setReceiveRequestAttemptId("1");
-        final List<Message> messages = sqs.receiveMessage(myQueueUrl).getMessages();
-        for (final Message message : messages) {
-
-            logger.info("Message:  " + message.getBody());
-            sns.publish("arn:aws:sns:us-east-1:588539278316:MyTopic",message.getBody());
-            logger.info("Publishing  message:  " + message.getBody()+" to MyTopic");
-        }
-
-    }
-
+   
     public void sendMessage(String message) {
 
         // Send a message.
