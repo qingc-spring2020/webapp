@@ -20,7 +20,7 @@ import java.util.List;
 public class AutoGenerator {
 
     static final String JDBC_DRIVER = "com.mysql.jdbc.Driver";
-    static final String DB_URL="jdbc:mysql://csye6225-spring2020.cbbds2uiwuco.us-east-1.rds.amazonaws.com";
+    static final String DB_URL="jdbc:mysql://csye6225-spring2020.c0ucbgzrob39.us-east-1.rds.amazonaws.com";
     static final String USER = "dbuser";
     static final String PASSWORD = "Jennifer202212";
 
@@ -137,7 +137,7 @@ public class AutoGenerator {
             }
         }
 
-        String jdbcUrl = "jdbc:mysql://csye6225-spring2020.cbbds2uiwuco.us-east-1.rds.amazonaws.com:3306/csye6225_assignment3";
+        String jdbcUrl = "jdbc:mysql://csye6225-spring2020.c0ucbgzrob39.us-east-1.rds.amazonaws.com:3306/csye6225_assignment3";
         String username = "dbuser";
         String password = "Jennifer202212";
 
